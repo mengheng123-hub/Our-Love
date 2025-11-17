@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heng & Romnea: Our Epic Journey</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Custom Tailwind configuration for dark mode and neon accents
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-purple': '#1F033D',
+                        'accent-pink': '#FF4D94', // Neon Pink
+                        'timer-bg': '#2C0752', // Darker Card Background
+                        'text-light': '#FDECF5',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Roboto Mono', 'monospace'], // For the digital clock effect
+                    },
+                    keyframes: {
+                        'heart-pulse': {
+                            '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0 0 4px rgba(255, 77, 148, 0.5))' },
+                            '50%': { transform: 'scale(1.15)', filter: 'drop-shadow(0 0 10px rgba(255, 77, 148, 0.9))' },
+                        }
+                    },
+                    animation: {
+                        'heart-pulse': 'heart-pulse 2s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Load Roboto Mono for digital counter look */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Styling for the main content card */
+        .cool-card {
+            background-color: var(--tw-colors-timer-bg);
+            border: 2px solid var(--tw-colors-accent-pink);
+            box-shadow: 0 0 30px rgba(255, 77, 148, 0.4);
+        }
+
+        /* Styling for the individual timer blocks */
+        .timer-block {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            padding: 0.75rem 0.25rem;
+            margin: 0.5rem;
+            flex-grow: 1;
+            min-width: 80px;
+        }
+
+        /* Digital display style for values */
+        .timer-value {
+            font-family: 'Roboto Mono', monospace;
+            text-shadow: 0 0 10px var(--tw-colors-accent-pink);
+            line-height: 1;
+        }
+
+        /* Smaller, more compact timer blocks for mobile */
+        @media (max-width: 640px) {
+            .timer-block {
+                min-width: 60px;
+                padding: 0.5rem 0.25rem;
+                margin: 0.4rem;
+            }
+            .timer-value {
+                font-size: 1.5rem; /* text-2xl */
+            }
+            .timer-label {
+                font-size: 0.625rem; /* text-xs */
+            }
+        }
+    </style>
+</head>
+<body class="bg-dark-purple min-h-screen flex items-center justify-center p-4 text-text-light">
+
+    <!-- Main Love Card Container -->
+    <div class="w-full max-w-2xl">
+
+        <div class="cool-card p-6 md:p-10 rounded-3xl shadow-2xl text-center">
+
+            <!-- Names and Animated Heart Divider -->
+            <div class="mb-8">
+                <div class="text-4xl md:text-6xl font-extrabold mb-4">
+                    <span class="text-accent-pink">Heng</span> & <span class="text-accent-pink">Romnea</span>
+                </div>
+                
+                <!-- Pulsing Heart SVG Icon -->
+                <svg class="w-10 h-10 mx-auto text-accent-pink animate-heart-pulse" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                
+                <p class="text-sm text-gray-400 mt-4">November 16, 2025</p>
+            </div>
+
+            <!-- Total Elapsed Time Display -->
+            <h2 class="text-xl font-bold text-gray-200 mb-4">Time Elapsed</h2>
+            <div id="elapsedTimer" class="flex flex-wrap justify-center p-2 md:p-4 rounded-xl mb-10">
+                <!-- Initial content will be overwritten by JavaScript -->
+            </div>
+
+            <hr class="border-t border-accent-pink opacity-50 mb-8">
+
+            <!-- Next Anniversary Countdown -->
+            <h2 id="countdownTitle" class="text-xl font-bold text-gray-200 mb-4">Countdown to Our Anniversary!</h2>
+            <div id="countdownTimer" class="flex flex-wrap justify-center p-2 md:p-4 rounded-xl">
+                 <!-- Initial content will be overwritten by JavaScript -->
+            </div>
+
+            <!-- Footer Message -->
+            <div class="mt-10">
+                <p class="text-lg md:text-xl italic text-gray-300">
+                    Forever starts now.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // --- Configuration ---
+        // Your relationship start date: November 16, 2025
+        const START_DATE = new Date('November 16, 2025 00:00:00'); 
+        
+        const MS_PER_SECOND = 1000;
+        const MS_PER_MINUTE = MS_PER_SECOND * 60;
+        const MS_PER_HOUR = MS_PER_MINUTE * 60;
+        const MS_PER_DAY = MS_PER_HOUR * 24;
+        
+        // --- DOM Elements ---
+        const elapsedTimerElement = document.getElementById('elapsedTimer');
+        const countdownTimerElement = document.getElementById('countdownTimer');
+        const countdownTitleElement = document.getElementById('countdownTitle');
+
+        // --- Helper Functions ---
+
+        /**
+         * Generates the HTML structure for a timer block.
+         * @param {string} value The display number/value.
+         * @param {string} label The time unit label (Years, Days, etc.).
+         * @returns {string} The HTML string for the timer block.
+         */
+        function createTimerBlock(value, label) {
+            // Use Intl.NumberFormat to ensure two digits for seconds/minutes/hours if value is small
+            const formattedValue = value.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false});
+            return `
+                <div class="timer-block text-center shadow-lg border border-accent-pink/50">
+                    <span class="timer-value text-3xl md:text-4xl text-accent-pink block">${formattedValue}</span>
+                    <span class="timer-label text-xs md:text-sm uppercase text-gray-400 block mt-1">${label}</span>
+                </div>
+            `;
+        }
+
+        /**
+         * Calculates the next anniversary date.
+         */
+        function getNextAnniversary(startDate) {
+            const now = new Date();
+            const startMonth = startDate.getMonth();
+            const startDay = startDate.getDate();
+            let nextAnniversaryYear = now.getFullYear();
+
+            let nextAnniversary = new Date(nextAnniversaryYear, startMonth, startDay);
+
+            // If the anniversary has passed this year (or is today), move to the next year
+            if (nextAnniversary.getTime() <= now.getTime()) {
+                nextAnniversaryYear++;
+                nextAnniversary = new Date(nextAnniversaryYear, startMonth, startDay);
+            }
+            return nextAnniversary;
+        }
+
+        /**
+         * Formats and updates the timer display blocks.
+         */
+        function updateDisplay(container, totalMilliseconds, isElapsed = true) {
+            
+            if (totalMilliseconds < 0) {
+                totalMilliseconds = 0; 
+            }
+
+            const days = Math.floor(totalMilliseconds / MS_PER_DAY);
+            const hours = Math.floor((totalMilliseconds % MS_PER_DAY) / MS_PER_HOUR);
+            const minutes = Math.floor((totalMilliseconds % MS_PER_HOUR) / MS_PER_MINUTE);
+            const seconds = Math.floor((totalMilliseconds % MS_PER_MINUTE) / MS_PER_SECOND);
+            
+            let timeData;
+            
+            if (isElapsed) {
+                // Time Elapsed Logic
+                const elapsedYears = Math.floor(days / 365.25);
+                const remainingDays = Math.floor(days % 365.25);
+
+                if (elapsedYears >= 1) {
+                    // Display Years, Remaining Days, Hours, Minutes
+                    timeData = [
+                        { value: elapsedYears, label: 'Years' },
+                        { value: remainingDays, label: 'Days' },
+                        { value: hours, label: 'Hours' },
+                        { value: minutes, label: 'Minutes' },
+                    ];
+                } else {
+                    // Display Total Days, Hours, Minutes, Seconds (since it's less than a year)
+                    timeData = [
+                        { value: days, label: 'Days' },
+                        { value: hours, label: 'Hours' },
+                        { value: minutes, label: 'Minutes' },
+                        { value: seconds, label: 'Seconds' },
+                    ];
+                }
+                
+            } else {
+                // Countdown Logic: Days, Hours, Minutes, Seconds
+                timeData = [
+                    { value: days, label: 'Days' },
+                    { value: hours, label: 'Hours' },
+                    { value: minutes, label: 'Minutes' },
+                    { value: seconds, label: 'Seconds' },
+                ];
+            }
+
+            // Optimization: Only generate HTML if the container is empty or we change the time unit structure (e.g., crossing the 1-year mark)
+            if (container.children.length !== timeData.length) {
+                container.innerHTML = timeData.map(data => createTimerBlock(data.value, data.label)).join('');
+            } else {
+                // Update existing blocks for performance
+                const blocks = container.querySelectorAll('.timer-block');
+                timeData.forEach((data, index) => {
+                    blocks[index].querySelector('.timer-value').textContent = data.value.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false});
+                    blocks[index].querySelector('.timer-label').textContent = data.label;
+                });
+            }
+        }
+
+        /**
+         * The main loop that updates both elapsed time and the anniversary countdown.
+         */
+        function updateTimers() {
+            const now = new Date();
+            const currentTime = now.getTime();
+
+            // 1. Elapsed Time Calculation
+            const timeElapsed = currentTime - START_DATE.getTime();
+            updateDisplay(elapsedTimerElement, timeElapsed, true);
+
+            // 2. Next Anniversary Countdown Calculation
+            const nextAnniversaryDate = getNextAnniversary(START_DATE);
+            const timeUntilAnniversary = nextAnniversaryDate.getTime() - currentTime;
+            
+            if (timeUntilAnniversary <= 0) {
+                // Anniversary is today or just passed
+                countdownTitleElement.textContent = "Happy Anniversary! Celebrating all our time together.";
+                updateDisplay(countdownTimerElement, 0, false);
+            } else {
+                const yearDiff = nextAnniversaryDate.getFullYear() - START_DATE.getFullYear();
+                countdownTitleElement.textContent = `Countdown to Our ${yearDiff}st Anniversary!`;
+                updateDisplay(countdownTimerElement, timeUntilAnniversary, false);
+            }
+        }
+
+        // Start the timer loop immediately and set it to update every second
+        window.onload = function() {
+            updateTimers();
+            // Start the interval timer
+            setInterval(updateTimers, MS_PER_SECOND);
+        };
+    </script>
+
+</body>
+</html>
